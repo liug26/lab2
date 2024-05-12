@@ -206,10 +206,10 @@ int main(int argc, char *argv[])
         }
 
         u32 process_runtime;
-        if(current_process->remaining_time <= quantum_length)
-            process_runtime = current_process->remaining_time;
-        else
+        if(current_process->remaining_time > quantum_length)
             process_runtime = quantum_length;
+        else
+            process_runtime = current_process->remaining_time;
 
         // run current process
         for (; process_runtime > 0; process_runtime--)
@@ -229,13 +229,13 @@ int main(int argc, char *argv[])
 
         TAILQ_REMOVE(&list, current_process, pointers);
 
-        if(current_process->remaining_time == 0)
+        if(current_process->remaining_time > 0)
+            TAILQ_INSERT_TAIL(&list, current_process, pointers);
+        else
         {
             num_unfinished_processes--;
             current_process->end_time = time_now;
-        }
-        else
-            TAILQ_INSERT_TAIL(&list, current_process, pointers);
+        }   
     }
 
     for (u32 i = 0; i < size; ++i)

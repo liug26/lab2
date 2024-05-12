@@ -10,13 +10,13 @@ Run `make` to build an executable file of rr.c
 
 ## Running
 
-cmd for running TODO
+cmd for running
 ```shell
 Run by running `./rr [process.txt] [quantum length]`
 For example `./rr process.txt 4` runs each process in process.txt with a quantum length of 4
 ```
 
-results TODO
+results
 ```shell
 Some running results include:
 ./rr processes.txt 3
