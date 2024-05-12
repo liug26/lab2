@@ -181,9 +181,9 @@ int main(int argc, char *argv[])
     u32 time_now = 0;
     u32 num_unfinished_processes = size;
 
-    while(num_unfinished_processes)
+    while(num_unfinished_processes > 0)
     {
-        for( u32 i = 0; i < size; i++)
+        for(u32 i = 0; i < size; i++)
         {
             if(data[i].arrival_time == time_now && !data[i].added_to_list)
             {
@@ -205,14 +205,14 @@ int main(int argc, char *argv[])
             current_process->init_start_execute_time = true;
         }
 
-        u32 time_block;
+        u32 process_runtime;
         if(current_process->remaining_time <= quantum_length)
-            time_block = current_process->remaining_time;
+            process_runtime = current_process->remaining_time;
         else
-            time_block = quantum_length;
+            process_runtime = quantum_length;
 
         // run current process
-        for (; time_block > 0; time_block--)
+        for (; process_runtime > 0; process_runtime--)
         {
             current_process->remaining_time--;
             time_now++;
