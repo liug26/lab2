@@ -21,11 +21,8 @@ struct process
   TAILQ_ENTRY(process) pointers;
 
   u32 remaining_time;
-  u32 start_exec_time;
+  u32 start_execute_time;
   u32 end_time;
-
-  bool isNew;
-  bool added;
 };
 
 TAILQ_HEAD(process_list, process);
@@ -147,122 +144,94 @@ void init_processes(const char *path,
 
 int main(int argc, char *argv[])
 {
-  if (argc != 3)
-  {
-    return EINVAL;
-  }
-  struct process *data;
-  u32 size;
-  init_processes(argv[1], &data, &size);
-
-  u32 quantum_length = next_int_from_c_str(argv[2]);
-
-  struct process_list list;
-  TAILQ_INIT(&list);
-
-  u32 total_waiting_time = 0;
-  u32 total_response_time = 0;
-
-  /* Your code here */
-  if (quantum_length <= 0 ){
-		fprintf(stderr, "Error: Invalid Quantum Time\n");
-    exit(EINVAL);
-	}
-
-  for(u32 i = 0; i < size; i++){
-    data[i].remaining_time = data[i].burst_time;
-    data[i].start_exec_time = 0;
-    data[i].end_time = 0;
-    data[i].isNew = true;
-    data[i].added = false;
-  }
-
-  u32 simulation_time = 0;
-  u32 remaining_process = size;
-
-  while(remaining_process)
-  {
-    //checks incoming new process
-    for( u32 i = 0; i < size; i++)
+    if (argc != 3)
     {
-      if(data[i].arrival_time == simulation_time && !data[i].added)
-      {
-        // fprintf(stderr,"added pid1: %d\n", data[i].pid);
-        TAILQ_INSERT_TAIL(&list, &data[i], pointers);
-        data[i].added = true;
-      }
+        return EINVAL;
+    }
+    struct process *data;
+    u32 size;
+    init_processes(argv[1], &data, &size);
+
+    u32 quantum_length = next_int_from_c_str(argv[2]);
+
+    struct process_list list;
+    TAILQ_INIT(&list);
+
+    u32 total_waiting_time = 0;
+    u32 total_response_time = 0;
+
+    /* Your code here */
+    if (quantum_length <= 0)
+    {
+        fprintf(stderr, "Quantum length should > 0\n");
+        exit(EINVAL);
     }
 
-    //get first element from queue
-    struct process *current = TAILQ_FIRST(&list);
-
-    if(current == NULL)
+    for(u32 i = 0; i < size; i++)
     {
-      simulation_time++;
-      continue;
+        data[i].remaining_time = data[i].burst_time;
+        data[i].start_execute_time = -1;
+        data[i].end_time = -1;
     }
 
+    u32 time_now = 0;
+    u32 unfinished = size;
 
-    //when did it first start
-    if(current->isNew)
+    while(unfinished)
     {
-      current->start_exec_time = simulation_time;
-      // fprintf(stderr,"pid: %d, exectime: %d\n", current->pid, current->start_exec_time);
-      current->isNew = false;
-    }
+        for(u32 i = 0; i < size; i++)
+            if(data[i].arrival_time == time_now)
+                TAILQ_INSERT_TAIL(&list, &data[i], pointers);
 
-    //get the right amount of run
-    u32 time_block;
-    if(current->remaining_time <= quantum_length)
-    {
-      time_block = current->remaining_time;
-    } else {
-      time_block = quantum_length;
-    }
-
-    //the current process turn
-    while(time_block)
-    {
-      current->remaining_time--;
-      time_block--;
-      simulation_time++;
-
-      //check for incoming again
-      for( u32 i = 0; i < size; i++)
-      {
-        if(data[i].arrival_time == simulation_time && !data[i].added)
+        struct process *current = TAILQ_FIRST(&list);
+        if(current == NULL)
         {
-          // fprintf(stderr,"added pid2: %d\n", data[i].pid);
-          TAILQ_INSERT_TAIL(&list, &data[i], pointers);
-          data[i].added = true;
+            time_now++;
+            continue;
         }
-      }
+
+        if(current->start_execute_time == -1)
+            current->start_execute_time = time_now;
+
+        u32 time_block;
+        if(current->remaining_time <= quantum_length)
+            time_block = current->remaining_time;
+        else
+            time_block = quantum_length;
+
+        // running the current process
+        while(time_block)
+        {
+            current->remaining_time--;
+            time_block--;
+            time_now++;
+
+            for(u32 i = 0; i < size; i++)
+                if(data[i].arrival_time == time_now)
+                    TAILQ_INSERT_TAIL(&list, &data[i], pointers);
+        }
+
+        if(current->remaining_time == 0)
+        {
+            current->end_time = time_now;
+            unfinished--;
+        }
+        else
+            TAILQ_INSERT_TAIL(&list, current, pointers);
+        
+        TAILQ_REMOVE(&list, current, pointers);
     }
 
-    //reinsert or done?
-    if(current->remaining_time == 0){
-      current->end_time = simulation_time;
-      // fprintf(stderr,"pid: %d, endtime: %d\n", current->pid, current->end_time);
-      remaining_process--;
-      TAILQ_REMOVE(&list, current, pointers);
-    }else{
-      TAILQ_REMOVE(&list, current, pointers);
-      TAILQ_INSERT_TAIL(&list, current, pointers);
+    for (u32 i = 0; i < size; ++i)
+    {
+        total_waiting_time += data[i].end_time - data[i].arrival_time - data[i].burst_time;
+        total_response_time += data[i].start_execute_time - data[i].arrival_time;
     }
-  }
+    /* End of "Your code here" */
 
-  //calculate response and waiting
-  for (u32 i = 0; i < size; ++i)
-  {
-    total_response_time += data[i].start_exec_time - data[i].arrival_time;
-    total_waiting_time += (data[i].end_time - data[i].arrival_time - data[i].burst_time);
-  }
+    printf("Average waiting time: %.2f\n", (float)total_waiting_time / (float)size);
+    printf("Average response time: %.2f\n", (float)total_response_time / (float)size);
 
-  /* End of "Your code here" */
-
-  printf("Average waiting time: %.2f\n", (float)total_waiting_time / (float)size);
-  printf("Average response time: %.2f\n", (float)total_response_time / (float)size);
-
-  free(data);
-  return 0;
+    free(data);
+    return 0;
 }
