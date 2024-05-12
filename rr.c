@@ -24,7 +24,6 @@ struct process
   u32 start_execute_time;
   u32 end_time;
   bool init_start_execute_time;
-  bool added;
 };
 
 TAILQ_HEAD(process_list, process);
@@ -175,7 +174,6 @@ int main(int argc, char *argv[])
         data[i].start_execute_time = 0;
         data[i].end_time = 0;
         data[i].init_start_execute_time = false;
-        data[i].added = false;
     }
 
     u32 time_now = 0;
@@ -185,10 +183,9 @@ int main(int argc, char *argv[])
     {
         for( u32 i = 0; i < size; i++)
         {
-            if(data[i].arrival_time == time_now && !data[i].added)
+            if(data[i].arrival_time == time_now)
             {
                 TAILQ_INSERT_TAIL(&list, &data[i], pointers);
-                data[i].added = true;
             }
         }
 
@@ -223,10 +220,9 @@ int main(int argc, char *argv[])
 
             for( u32 i = 0; i < size; i++)
             {
-                if(data[i].arrival_time == time_now && !data[i].added)
+                if(data[i].arrival_time == time_now)
                 {
                     TAILQ_INSERT_TAIL(&list, &data[i], pointers);
-                    data[i].added = true;
                 }
             }
         }
