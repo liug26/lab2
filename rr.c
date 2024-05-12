@@ -207,17 +207,14 @@ int main(int argc, char *argv[])
 
         u32 time_block;
         if(current_process->remaining_time <= quantum_length)
-        {
             time_block = current_process->remaining_time;
-        } else {
+        else
             time_block = quantum_length;
-        }
 
         // run current process
-        while(time_block)
+        for (; time_block > 0; time_block--)
         {
             current_process->remaining_time--;
-            time_block--;
             time_now++;
 
             for(u32 i = 0; i < size; i++)
@@ -231,15 +228,14 @@ int main(int argc, char *argv[])
         }
 
         TAILQ_REMOVE(&list, current_process, pointers);
+
         if(current_process->remaining_time == 0)
         {
-            current_process->end_time = time_now;
             num_unfinished_processes--;
+            current_process->end_time = time_now;
         }
         else
-        {
             TAILQ_INSERT_TAIL(&list, current_process, pointers);
-        }
     }
 
     for (u32 i = 0; i < size; ++i)
