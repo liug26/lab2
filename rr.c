@@ -24,6 +24,7 @@ struct process
   u32 start_execute_time;
   u32 end_time;
   bool init_start_execute_time;
+  bool added_to_list;
 };
 
 TAILQ_HEAD(process_list, process);
@@ -174,6 +175,7 @@ int main(int argc, char *argv[])
         data[i].start_execute_time = 0;
         data[i].end_time = 0;
         data[i].init_start_execute_time = false;
+        data[i].added_to_list = false;
     }
 
     u32 time_now = 0;
@@ -183,30 +185,30 @@ int main(int argc, char *argv[])
     {
         for( u32 i = 0; i < size; i++)
         {
-            if(data[i].arrival_time == time_now)
+            if(data[i].arrival_time == time_now && !data[i].added_to_list)
             {
                 TAILQ_INSERT_TAIL(&list, &data[i], pointers);
+                data[i].added_to_list = true;
             }
         }
 
-        struct process *current = TAILQ_FIRST(&list);
-
-        if(current == NULL)
+        struct process *current_process = TAILQ_FIRST(&list);
+        if(current_process == NULL)
         {
             time_now++;
             continue;
         }
 
-        if(!current->init_start_execute_time)
+        if(!current_process->init_start_execute_time)
         {
-            current->start_execute_time = time_now;
-            current->init_start_execute_time = true;
+            current_process->start_execute_time = time_now;
+            current_process->init_start_execute_time = true;
         }
 
         u32 time_block;
-        if(current->remaining_time <= quantum_length)
+        if(current_process->remaining_time <= quantum_length)
         {
-            time_block = current->remaining_time;
+            time_block = current_process->remaining_time;
         } else {
             time_block = quantum_length;
         }
@@ -214,29 +216,30 @@ int main(int argc, char *argv[])
         // run current process
         while(time_block)
         {
-            current->remaining_time--;
+            current_process->remaining_time--;
             time_block--;
             time_now++;
 
-            for( u32 i = 0; i < size; i++)
+            for(u32 i = 0; i < size; i++)
             {
-                if(data[i].arrival_time == time_now)
+                if(data[i].arrival_time == time_now && !data[i].added_to_list)
                 {
                     TAILQ_INSERT_TAIL(&list, &data[i], pointers);
+                    data[i].added_to_list = true;
                 }
             }
         }
 
-        if(current->remaining_time == 0)
+        if(current_process->remaining_time == 0)
         {
-            current->end_time = time_now;
+            current_process->end_time = time_now;
             num_unfinished_processes--;
-            TAILQ_REMOVE(&list, current, pointers);
+            TAILQ_REMOVE(&list, current_process, pointers);
         }
         else
         {
-            TAILQ_REMOVE(&list, current, pointers);
-            TAILQ_INSERT_TAIL(&list, current, pointers);
+            TAILQ_REMOVE(&list, current_process, pointers);
+            TAILQ_INSERT_TAIL(&list, current_process, pointers);
         }
     }
 
