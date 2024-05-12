@@ -23,8 +23,7 @@ struct process
   u32 remaining_time;
   u32 start_execute_time;
   u32 end_time;
-
-  bool isNew;
+  bool init_start_execute_time;
   bool added;
 };
 
@@ -175,7 +174,7 @@ int main(int argc, char *argv[])
         data[i].remaining_time = data[i].burst_time;
         data[i].start_execute_time = 0;
         data[i].end_time = 0;
-        data[i].isNew = true;
+        data[i].init_start_execute_time = false;
         data[i].added = false;
     }
 
@@ -201,10 +200,10 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        if(current->isNew)
+        if(!current->init_start_execute_time)
         {
             current->start_execute_time = time_now;
-            current->isNew = false;
+            current->init_start_execute_time = true;
         }
 
         u32 time_block;
