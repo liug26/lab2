@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        if(current->init_start_execute_time = false)
+        if(!current->init_start_execute_time)
         {
             current->start_execute_time = time_now;
             current->init_start_execute_time = true;
@@ -220,11 +220,13 @@ int main(int argc, char *argv[])
         {
             unfinished--;
             current->end_time = time_now;
+            TAILQ_REMOVE(&list, current, pointers);
         }
         else
+        {
+            TAILQ_REMOVE(&list, current, pointers);
             TAILQ_INSERT_TAIL(&list, current, pointers);
-        
-        TAILQ_REMOVE(&list, current, pointers);
+        }
     }
 
     for (u32 i = 0; i < size; ++i)
