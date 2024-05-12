@@ -23,6 +23,7 @@ struct process
   u32 remaining_time;
   u32 start_execute_time;
   u32 end_time;
+  bool init_start_execute_time;
 };
 
 TAILQ_HEAD(process_list, process);
@@ -170,8 +171,9 @@ int main(int argc, char *argv[])
     for(u32 i = 0; i < size; i++)
     {
         data[i].remaining_time = data[i].burst_time;
-        data[i].start_execute_time = -1;
-        data[i].end_time = -1;
+        data[i].init_start_execute_time = false;
+        data[i].start_execute_time = 0;
+        data[i].end_time = 0;
     }
 
     u32 time_now = 0;
@@ -190,8 +192,11 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        if(current->start_execute_time == -1)
+        if(current->init_start_execute_time = false)
+        {
             current->start_execute_time = time_now;
+            current->init_start_execute_time = true;
+        }
 
         u32 time_block;
         if(current->remaining_time <= quantum_length)
@@ -213,8 +218,8 @@ int main(int argc, char *argv[])
 
         if(current->remaining_time == 0)
         {
-            current->end_time = time_now;
             unfinished--;
+            current->end_time = time_now;
         }
         else
             TAILQ_INSERT_TAIL(&list, current, pointers);
