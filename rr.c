@@ -230,15 +230,14 @@ int main(int argc, char *argv[])
             }
         }
 
+        TAILQ_REMOVE(&list, current_process, pointers);
         if(current_process->remaining_time == 0)
         {
             current_process->end_time = time_now;
             num_unfinished_processes--;
-            TAILQ_REMOVE(&list, current_process, pointers);
         }
         else
         {
-            TAILQ_REMOVE(&list, current_process, pointers);
             TAILQ_INSERT_TAIL(&list, current_process, pointers);
         }
     }
